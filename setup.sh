@@ -1,9 +1,22 @@
 #!/bin/bash
 
-GITHUB_USER="Peppson"
+#############################################################
+
+# Github
+USER="Peppson"
 PUBLIC_REPO="vs-setup"
 BRANCH="main"
-BASE_URL="https://raw.githubusercontent.com/$GITHUB_USER/$PUBLIC_REPO/$BRANCH"
+GITHUB_URL="https://raw.githubusercontent.com/$USER/$PUBLIC_REPO/$BRANCH"
+
+# .gitignore
+GITIGNORE_URL="https://raw.githubusercontent.com/github/gitignore/main/VisualStudio.gitignore"
+
+# Files and paths
+declare -A FILE_MAP
+FILE_MAP["settings.json"]=".vscode/"
+FILE_MAP["launch.json"]=".vscode/"
+
+#############################################################
 
 
 # Does curl and grep exist? They should?
@@ -19,74 +32,79 @@ then
     exit 1
 fi
 
-
-# Make dirs
-mkdir -p .vscode
-
-
-download_file() {
-    curl --fail -sS "$BASE_URL/$1"
-}
-
-remove_first_and_last_lines() {
-    echo "$1" | sed '1d;$d'
-}
-
-
-
-
-if [ ! -f .vscode/settings.json ]; then
-    echo "> Downloading settings.json..."
-    curl --fail -sS -o .vscode/settings.json "$BASE_URL/settings.json"
-else 
-    echo "> Appending..."
+update_file_if_needed() {
+    file_name="$1" 
+    path="${2:-}"
 
     # Download new file
-    file=$(download_file "settings.json")
-    stripped_file=$(remove_first_and_last_lines "$file")
+    file=$(curl --fail -sS "$GITHUB_URL/$file_name")
 
-    # Grab current file
-    current_file=$(<.vscode/settings.json)
+    # Remove first and last '{' '}'
+    stripped_file=$(echo "$file" | sed '1{/^{/d}' | sed '${/}$/d}') 
 
-    # Search if current_file contains stripped_file contents
-    normalized_current_file=$(echo "$current_file" | tr -s '[:space:]' '\n' | tr -d '[:space:]')
+    # Grab local file
+    local_file=$(<$path$file_name)
+
+    normalized_current_file=$(echo "$local_file" | tr -s '[:space:]' '\n' | tr -d '[:space:]')
     normalized_stripped_file=$(echo "$stripped_file" | tr -s '[:space:]' '\n' | tr -d '[:space:]')
 
+    # Look if local_file contains stripped_file content
     if ! echo "$normalized_current_file" | grep -qF "$normalized_stripped_file"; then
-        # Insert stripped_file content into current_file after the first {
-        # Why temp? Nothing else worked...
-        temp_file=$(mktemp)
-        echo "$stripped_file," > "$temp_file"
-        modified_file=$(sed '/^$/d' <<< "$current_file" | sed "0,/{/r $temp_file")
-        rm "$temp_file"
-
-        echo "$modified_file" > .vscode/settings.json
+        append_file "$local_file" "$stripped_file" "$file_name" "$path"
     fi
-fi
+}
 
+get_stripped_file() {
+    
+}
 
+append_file() {
+    local_file="$1"
+    stripped_file="$2"
+    file_name="$3" 
+    path="$4"
 
+    # Insert stripped_file content into local_file after the first "{"
+    temp_file=$(mktemp)
+    echo "$stripped_file," > "$temp_file"
+    modified_file=$(sed '/^$/d' <<< "$local_file" | sed "0,/{/r $temp_file")
+    rm "$temp_file"
 
+    echo "$modified_file" > $path$file_name
+    echo "> Downloading and updating $file_name..."
+}
 
+# Make dir
+mkdir -p .vscode
 
+echo -e "\n"
 
-
-# Download only if missing
+# Download .gitignore
 if [ ! -f .gitignore ]; then
     echo "> Downloading .gitignore..."
-    curl --fail -sS -o .gitignore "https://raw.githubusercontent.com/github/gitignore/main/VisualStudio.gitignore"
+    curl --fail -sS -o .gitignore "$GITIGNORE_URL"
+    
+elif [ ! -s .gitignore ]; then
+    echo "> .gitignore is empty, downloading..."
+    curl --fail -sS -o .gitignore "$GITIGNORE_URL"
 fi
 
+# Download and append files if needed
+for file in "${!FILE_MAP[@]}"; do
+    path="${FILE_MAP[$file]}"
 
-exit 0
+    # Missing
+    if [ ! -f $path$file ]; then
+        echo "> Downloading $file..."
+        curl --fail -sS -o $path$file "$GITHUB_URL/$file"
+    # Empty
+    elif [ ! -s $path$file ]; then
+        echo "> $file is empty, downloading..."
+        curl --fail -sS -o $path$file "$GITHUB_URL/$file"
+    # Append content?
+    else 
+        update_file_if_needed $file $path
+    fi
+done
 
-
-if [ ! -f .vscode/settings.json ]; then
-    download_file .vscode/ settings.json
-fi
-
-if [ ! -f .vscode/launch.json ]; then
-  #curl -o .vscode/launch.json "$BASE_URL/launch.json"
-fi
-
-echo -e "\n> \033[0;32mAll done!\033[0m 🗿🗿🗿"
+echo -e "> \033[0;32mAll done!\033[0m 🗿🗿🗿"
