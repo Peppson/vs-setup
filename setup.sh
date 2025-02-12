@@ -12,7 +12,7 @@ GITHUB_URL="https://raw.githubusercontent.com/$USER/$PUBLIC_REPO/$BRANCH"
 # .gitignore
 GITIGNORE_URL="https://raw.githubusercontent.com/github/gitignore/main/VisualStudio.gitignore"
 
-# Files and paths
+# Files and local paths
 declare -A FILE_MAP
 FILE_MAP["settings.json"]=".vscode/"
 FILE_MAP["tasks.json"]=".vscode/"
@@ -140,4 +140,4 @@ for file in "${!FILE_MAP[@]}"; do
     fi
 done
 
-echo -e "> \033[0;32mDone Bby!\033[0m 🗿🗿🗿"
+echo -e "> \033[0;32mDone Baby!\033[0m 🗿🗿🗿"
