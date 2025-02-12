@@ -1,0 +1,7 @@
+[
+    {
+      "key": "insert",
+      "command": "workbench.action.tasks.runTask",
+      "args": "Build"
+    }
+]

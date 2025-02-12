@@ -15,7 +15,7 @@ GITIGNORE_URL="https://raw.githubusercontent.com/github/gitignore/main/VisualStu
 # Files and paths
 declare -A FILE_MAP
 FILE_MAP["settings.json"]=".vscode/"
-#FILE_MAP["launch.json"]=".vscode/"
+#FILE_MAP["tasks.json"]=".vscode/"
 
 
 #############################################################
