@@ -15,10 +15,83 @@ GITIGNORE_URL="https://raw.githubusercontent.com/github/gitignore/main/VisualStu
 # Files and paths
 declare -A FILE_MAP
 FILE_MAP["settings.json"]=".vscode/"
-#FILE_MAP["tasks.json"]=".vscode/"
-
+FILE_MAP["tasks.json"]=".vscode/"
 
 #############################################################
+
+
+update_file_if_needed() {
+    file_name="$1" 
+    path="${2:-}"
+
+    # Download new file
+    file=$(curl --fail -sS "$GITHUB_URL/$file_name") || return 1
+
+    # Get file wrapping brackets '[' or '{'
+    bracket=$(get_bracket_type "$file_name")
+
+    # Remove boilerplate around file content
+    stripped_file=$(get_stripped_file "$file" "$bracket")
+
+    # Grab local file
+    local_file=$(<$path$file_name)
+
+    normalized_current_file=$(echo "$local_file" | tr -s '[:space:]' '\n' | tr -d '[:space:]')
+    normalized_stripped_file=$(echo "$stripped_file" | tr -s '[:space:]' '\n' | tr -d '[:space:]')
+
+    # Look if local_file contains stripped_file content
+    if ! echo "$normalized_current_file" | grep -qF "$normalized_stripped_file"; then
+        merge_file "$local_file" "$stripped_file" "$file_name" "$path" "$bracket"
+    fi
+}
+
+get_stripped_file() {
+    file_content="$1"
+    bracket="$2"
+    
+    if [ "$bracket" == "{" ]; then
+        echo "$file_content" | perl -0777 -pe 's/^[^{]*\{//s' | perl -0777 -pe 's/\}[^}]*$//s'
+    elif [ "$bracket" == "[" ]; then
+        echo "$file_content" | perl -0777 -pe 's/^[^[]*\[//s' | perl -0777 -pe 's/\][^]]*$//s'
+    fi    
+}
+
+merge_file() {
+    local_file="$1"
+    stripped_file="$2"
+    file_name="$3" 
+    path="$4"
+    bracket="$5"
+
+    # Merge stripped_file content into local_file
+    temp_file=$(mktemp)
+    echo "$stripped_file," > "$temp_file"
+
+    if [ "$bracket" == "{" ]; then
+        modified_file=$(sed '/^$/d' <<< "$local_file" | sed "0,/{/r $temp_file")
+
+    elif [ "$bracket" == "[" ]; then
+        modified_file=$(perl -0777 -pe 's/\[/PATTERN/' <<< "$local_file")
+        modified_file=$(echo "$modified_file" | perl -pe "s/PATTERN/\\[$(<"$temp_file")/")
+    fi 
+
+    rm "$temp_file"
+
+    echo "> Downloading and merging $file_name..."
+    echo "$modified_file" > $path$file_name
+}
+
+get_bracket_type() {
+    file_name="$1" 
+
+    if [ "$file_name" == "settings.json" ]; then
+        echo "{"
+    elif [ "$file_name" == "tasks.json" ]; then
+        echo "["
+    elif [ "$file_name" == "keybindings.json" ]; then
+        echo "["
+    fi
+}
 
 
 # Does curl and grep exist? They should?
@@ -33,77 +106,6 @@ then
     echo -e "\n> \033[0;31mError:\033[0m grep is not installed!"
     exit 1
 fi
-
-update_file_if_needed() {
-    file_name="$1" 
-    path="${2:-}"
-
-    # Download new file
-    file=$(curl --fail -sS "$GITHUB_URL/$file_name")
-
-    # Remove boilerplate around file content
-    #stripped_file=$(get_stripped_file "$file" "$file_name")
-
-    # Grab local file
-    local_file=$(<$path$file_name)
-    
-    
-
-    #todo
-    stripped_file=$(echo "$local_file" | sed '${/}$/d}')
-    echo -e "\n---------------"
-    echo "$local_file"
-    echo -e "############################"
-    echo "$stripped_file"
-    exit 0
-
-
-
-    normalized_current_file=$(echo "$local_file" | tr -s '[:space:]' '\n' | tr -d '[:space:]')
-    normalized_stripped_file=$(echo "$stripped_file" | tr -s '[:space:]' '\n' | tr -d '[:space:]')
-
-    # Look if local_file contains stripped_file content
-    if ! echo "$normalized_current_file" | grep -qF "$normalized_stripped_file"; then
-        append_file "$local_file" "$stripped_file" "$file_name" "$path"
-    fi
-}
-
-get_stripped_file() {
-    file_content="$1"
-    file_name="$2"
-
-    #if [ "$file_name" == "settings.json" ]; then
-
-
-    #elif [ "$file_name" == "launch.json" ]; then
-        
-    #fi
-
-    # todo
-    #echo "$file" | sed '1{/^{/d}' | sed '${/}$/d}'
-
-
-
-    #todo 
-    #echo "$file_content" | sed '$,/}/d'
-    
-}
-
-append_file() {
-    local_file="$1"
-    stripped_file="$2"
-    file_name="$3" 
-    path="$4"
-
-    # Insert stripped_file content into local_file after the first "{"
-    temp_file=$(mktemp)
-    echo "$stripped_file," > "$temp_file"
-    modified_file=$(sed '/^$/d' <<< "$local_file" | sed "0,/{/r $temp_file")
-    rm "$temp_file"
-
-    echo "$modified_file" > $path$file_name
-    echo "> Downloading and merging $file_name..."
-}
 
 # Make dir
 mkdir -p .vscode
@@ -120,7 +122,7 @@ elif [ ! -s .gitignore ]; then
     curl --fail -sS -o .gitignore "$GITIGNORE_URL"
 fi
 
-# Download and append files if needed
+# Download and merge files if needed
 for file in "${!FILE_MAP[@]}"; do
     path="${FILE_MAP[$file]}"
 
@@ -132,10 +134,10 @@ for file in "${!FILE_MAP[@]}"; do
     elif [ ! -s $path$file ]; then
         echo "> $file is empty, downloading..."
         curl --fail -sS -o $path$file "$GITHUB_URL/$file"
-    # Append content?
+    # Merge file content?
     else 
         update_file_if_needed $file $path
     fi
 done
 
-echo -e "> \033[0;32mAll done!\033[0m 🗿🗿🗿"
+echo -e "> \033[0;32mDone Bby!\033[0m 🗿🗿🗿"
