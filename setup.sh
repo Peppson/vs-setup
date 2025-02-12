@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 #############################################################
 
 # Github
@@ -14,7 +15,8 @@ GITIGNORE_URL="https://raw.githubusercontent.com/github/gitignore/main/VisualStu
 # Files and paths
 declare -A FILE_MAP
 FILE_MAP["settings.json"]=".vscode/"
-FILE_MAP["launch.json"]=".vscode/"
+#FILE_MAP["launch.json"]=".vscode/"
+
 
 #############################################################
 
@@ -39,11 +41,23 @@ update_file_if_needed() {
     # Download new file
     file=$(curl --fail -sS "$GITHUB_URL/$file_name")
 
-    # Remove first and last '{' '}'
-    stripped_file=$(echo "$file" | sed '1{/^{/d}' | sed '${/}$/d}') 
+    # Remove boilerplate around file content
+    #stripped_file=$(get_stripped_file "$file" "$file_name")
 
     # Grab local file
     local_file=$(<$path$file_name)
+    
+    
+
+    #todo
+    stripped_file=$(echo "$local_file" | sed '${/}$/d}')
+    echo -e "\n---------------"
+    echo "$local_file"
+    echo -e "############################"
+    echo "$stripped_file"
+    exit 0
+
+
 
     normalized_current_file=$(echo "$local_file" | tr -s '[:space:]' '\n' | tr -d '[:space:]')
     normalized_stripped_file=$(echo "$stripped_file" | tr -s '[:space:]' '\n' | tr -d '[:space:]')
@@ -55,6 +69,23 @@ update_file_if_needed() {
 }
 
 get_stripped_file() {
+    file_content="$1"
+    file_name="$2"
+
+    #if [ "$file_name" == "settings.json" ]; then
+
+
+    #elif [ "$file_name" == "launch.json" ]; then
+        
+    #fi
+
+    # todo
+    #echo "$file" | sed '1{/^{/d}' | sed '${/}$/d}'
+
+
+
+    #todo 
+    #echo "$file_content" | sed '$,/}/d'
     
 }
 
@@ -71,7 +102,7 @@ append_file() {
     rm "$temp_file"
 
     echo "$modified_file" > $path$file_name
-    echo "> Downloading and updating $file_name..."
+    echo "> Downloading and merging $file_name..."
 }
 
 # Make dir
