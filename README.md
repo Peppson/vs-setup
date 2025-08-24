@@ -1,4 +1,4 @@
-# Personal vscode setup script
+# Setup script for the setup script script...
 
 ```bash
 ALIAS="vs-setup"
