@@ -6,6 +6,8 @@
     "**/*.csproj.user": true
   },
   "search.exclude": {
-    "**/MyProject/**": true
+    "**/MyProject/**": true,
+    "**/.gitignore": true,
+    "**/node_modules": true,
   },
 }
