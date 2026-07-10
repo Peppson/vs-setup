@@ -1,5 +1,4 @@
-## Install the *`vs-setup`* script
-
+## script - *`vs-setup`* 
 ```bash
 ALIAS="vs-setup"
 DIR="$HOME/bash_scripts/"
@@ -16,7 +15,12 @@ echo "alias $ALIAS='bash $SCRIPT_PATH'" >> ~/.bashrc
 source ~/.bashrc
 ```
 
-## Open repo in browser alias
+## Alias - *`Open repo in browser`* 
 ```bash
 git config --global alias.nasa '!start "" "$(printf "%s/tree/%s" "$(git config remote.origin.url | sed "s/\.git$//")" "$(git branch --show-current)")"'
+```
+
+## Alias - Open repo in browser
+```bash
+// git config --global alias.bash '!start "" "C:\Program Files\Git\git-bash.exe" --cd="$PWD"'
 ```
