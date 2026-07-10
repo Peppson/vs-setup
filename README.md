@@ -20,7 +20,7 @@ source ~/.bashrc
 git config --global alias.nasa '!start "" "$(printf "%s/tree/%s" "$(git config remote.origin.url | sed "s/\.git$//")" "$(git branch --show-current)")"'
 ```
 
-## Alias - Open repo in browser
+## Alias - *`Open path in git bash`* 
 ```bash
-// git config --global alias.bash '!start "" "C:\Program Files\Git\git-bash.exe" --cd="$PWD"'
+git config --global alias.bash '!start "" "C:\Program Files\Git\git-bash.exe" --cd="$PWD"'
 ```
