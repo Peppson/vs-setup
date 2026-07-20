@@ -24,3 +24,13 @@ git config --global alias.nasa '!start "" "$(printf "%s/tree/%s" "$(git config r
 ```bash
 git config --global alias.bash '!start "" "C:\Program Files\Git\git-bash.exe" --cd="$PWD"'
 ```
+
+## Stuff
+
+
+| Name | Link | Desc |
+|---|---|---|
+|Lucide|https://lucide.dev/|.svg|
+|Pexels|https://www.pexels.com/sv-se/|free images|
+|Can I Use|https://caniuse.com/|JS in which browser|
+
